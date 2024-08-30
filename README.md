@@ -23,5 +23,5 @@ Follow these instructions to get a copy of ProAct+ up and running on your local 
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/yourusername/ProAct.git
-   cd proact-plus
+   git clone https://github.com/Adityan-TS/ProAct.git
+   cd proact
