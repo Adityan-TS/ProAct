@@ -5,24 +5,23 @@ import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:proact/event_calender_new.dart';
+import 'package:proact/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
-
-
+NotificationService _notifyService = NotificationService();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
 
-    
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   // Initialize Supabase
   await Supabase.initialize(
     url: 'https://qtljgttwigasqvkzeqxf.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0bGpndHR3aWdhc3F2a3plcXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk5OTQ1NzUsImV4cCI6MjAzNTU3MDU3NX0.hcbOVDajJSmn7EdisH2eBeLpxOww3sSG7PVxoEsOdeU',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0bGpndHR3aWdhc3F2a3plcXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk5OTQ1NzUsImV4cCI6MjAzNTU3MDU3NX0.hcbOVDajJSmn7EdisH2eBeLpxOww3sSG7PVxoEsOdeU',
   );
 
   // Initialize Gemini
@@ -30,17 +29,19 @@ void main() async {
     apiKey: 'AIzaSyDHtx8QtdqWHUpNEd8J_nogM3tjjj5NSEA',
   );
 
-    Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  Future<void> main() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
+
+  _notifyService.initialiseNotifications();
 
   final supabaseClient = Supabase.instance.client;
   runApp(ProAct(supabaseClient: supabaseClient));
@@ -57,7 +58,8 @@ class ProAct extends StatelessWidget {
       title: 'ProAct',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Color(0xFF1A1A1A), // Set background color to hex #1a1a1a
+        scaffoldBackgroundColor:
+            Color(0xFF1A1A1A), // Set background color to hex #1a1a1a
       ),
       initialRoute: '/',
       routes: {
@@ -65,25 +67,32 @@ class ProAct extends StatelessWidget {
               future: checkAuthStatus(), // Check authentication status
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Scaffold(body: Center(child: CircularProgressIndicator()));
+                  return Scaffold(
+                      body: Center(child: CircularProgressIndicator()));
                 } else {
                   if (snapshot.data == true) {
-                    return MyHomePage(title: 'Flutter App Home Page'); // User is logged in, show home page
+                    return MyHomePage(
+                        title:
+                            'Flutter App Home Page'); // User is logged in, show home page
                   } else {
-                    return IntroScreen(supabaseClient: supabaseClient); // User not logged in, show intro screen
+                    return IntroScreen(
+                        supabaseClient:
+                            supabaseClient); // User not logged in, show intro screen
                   }
                 }
               },
             ),
         '/home': (context) => MyHomePage(title: 'Flutter App Home Page'),
-  '/calendar': (context) => CalendarPage(eventData: []),
+        // '/calendar': (context) => EventCalender()
+        '/calendar': (context) => EventCalenderNew(eventData: []),
       },
     );
   }
 
   Future<bool> checkAuthStatus() async {
     final user = supabaseClient.auth.currentUser;
-    return user != null; // Return true if user is authenticated, false otherwise
+    return user !=
+        null; // Return true if user is authenticated, false otherwise
   }
 }
 
@@ -109,7 +118,8 @@ class _IntroScreenState extends State<IntroScreen> {
       // User is already authenticated, navigate to home page
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MyHomePage(title: 'Flutter App Home Page')),
+        MaterialPageRoute(
+            builder: (context) => MyHomePage(title: 'Flutter App Home Page')),
       );
     }
   }
@@ -120,14 +130,19 @@ class _IntroScreenState extends State<IntroScreen> {
       body: Align(
         alignment: Alignment.centerLeft, // Align to the center left
         child: Padding(
-          padding: EdgeInsets.fromLTRB(35.0, 100.0, 35.0, 0), // Adjust position with padding
+          padding: EdgeInsets.fromLTRB(
+              35.0, 100.0, 35.0, 0), // Adjust position with padding
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center, // Center vertically
-            crossAxisAlignment: CrossAxisAlignment.start, // Align children to the start (left)
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // Align children to the start (left)
             children: [
               Text(
                 "Let's Get",
-                style: GoogleFonts.poppins(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+                style: GoogleFonts.poppins(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
                 // Use Poppins font and set color to white
               ),
               Text(
@@ -135,17 +150,22 @@ class _IntroScreenState extends State<IntroScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 40,
                   fontWeight: FontWeight.bold, // Set fontWeight to bold
-                  color: Colors.white, // Use Poppins font and set color to white
+                  color:
+                      Colors.white, // Use Poppins font and set color to white
                 ),
               ),
               Text(
                 'Fight Procrastination With Ease',
-                style: GoogleFonts.poppins(fontSize: 13, color: Colors.white), // Use Poppins font and set color to white
+                style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors
+                        .white), // Use Poppins font and set color to white
               ),
               SizedBox(height: 24),
               Container(
                 width: double.infinity, // Full width button
-                padding: EdgeInsets.symmetric(vertical: 7.5), // Smaller vertical padding
+                padding: EdgeInsets.symmetric(
+                    vertical: 7.5), // Smaller vertical padding
                 margin: EdgeInsets.only(bottom: 16.0), // Margin between buttons
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10.0), // Rounded corners
@@ -155,16 +175,23 @@ class _IntroScreenState extends State<IntroScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginScreen(supabaseClient: widget.supabaseClient)), // Navigate to LoginScreen
+                      MaterialPageRoute(
+                          builder: (context) => LoginScreen(
+                              supabaseClient: widget
+                                  .supabaseClient)), // Navigate to LoginScreen
                     );
                   },
                   style: ButtonStyle(
-                    minimumSize: MaterialStateProperty.all<Size>(Size(double.infinity, 0)), // Smaller height
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.transparent), // Transparent background for ElevatedButton
-                    shadowColor: MaterialStateProperty.all<Color>(Colors.transparent), // Transparent shadow
+                    minimumSize: MaterialStateProperty.all<Size>(
+                        Size(double.infinity, 0)), // Smaller height
+                    backgroundColor: MaterialStateProperty.all<Color>(Colors
+                        .transparent), // Transparent background for ElevatedButton
+                    shadowColor: MaterialStateProperty.all<Color>(
+                        Colors.transparent), // Transparent shadow
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                        borderRadius:
+                            BorderRadius.circular(10.0), // Rounded corners
                       ),
                     ),
                   ),
@@ -173,7 +200,8 @@ class _IntroScreenState extends State<IntroScreen> {
                     child: Text(
                       'Login',
                       style: TextStyle(
-                        color: Color(0xFF1A1A1A), // Set button text color to #1a1a1a
+                        color: Color(
+                            0xFF1A1A1A), // Set button text color to #1a1a1a
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,
                       ),
@@ -183,26 +211,35 @@ class _IntroScreenState extends State<IntroScreen> {
               ),
               Container(
                 width: double.infinity, // Full width button
-                padding: EdgeInsets.symmetric(vertical: 7.5), // Smaller vertical padding
+                padding: EdgeInsets.symmetric(
+                    vertical: 7.5), // Smaller vertical padding
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10.0), // Rounded corners
                   color: Color(0xFF1A1A1A), // Dark background color
-                  border: Border.all(color: Colors.white, width: 2.0), // White border
+                  border: Border.all(
+                      color: Colors.white, width: 2.0), // White border
                 ),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SignUpScreen(supabaseClient: widget.supabaseClient)), // Navigate to SignUpScreen
+                      MaterialPageRoute(
+                          builder: (context) => SignUpScreen(
+                              supabaseClient: widget
+                                  .supabaseClient)), // Navigate to SignUpScreen
                     );
                   },
                   style: ButtonStyle(
-                    minimumSize: MaterialStateProperty.all<Size>(Size(double.infinity, 0)), // Smaller height
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.transparent), // Transparent background for ElevatedButton
-                    shadowColor: MaterialStateProperty.all<Color>(Colors.transparent), // Transparent shadow
+                    minimumSize: MaterialStateProperty.all<Size>(
+                        Size(double.infinity, 0)), // Smaller height
+                    backgroundColor: MaterialStateProperty.all<Color>(Colors
+                        .transparent), // Transparent background for ElevatedButton
+                    shadowColor: MaterialStateProperty.all<Color>(
+                        Colors.transparent), // Transparent shadow
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                        borderRadius:
+                            BorderRadius.circular(10.0), // Rounded corners
                       ),
                     ),
                   ),
@@ -226,7 +263,6 @@ class _IntroScreenState extends State<IntroScreen> {
     );
   }
 }
-
 
 class SignUpScreen extends StatefulWidget {
   final SupabaseClient supabaseClient;
@@ -300,7 +336,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       hintStyle: TextStyle(color: Colors.grey),
                       fillColor: Color(0xFFf1f5f9),
                       filled: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      contentPadding: EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 12.0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         borderSide: BorderSide.none,
@@ -311,7 +348,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email address';
                       }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[a-zA-Z]{2,}$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email address';
                       }
                       return null;
@@ -325,7 +363,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       hintStyle: TextStyle(color: Colors.grey),
                       fillColor: Color(0xFFf1f5f9),
                       filled: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      contentPadding: EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 12.0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         borderSide: BorderSide.none,
@@ -349,16 +388,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       if (_formKey.currentState!.validate()) {
                         final email = _emailController.text.trim();
                         final password = _passwordController.text.trim();
-                        await widget.supabaseClient.auth.signUp(email: email, password: password);
-                        Navigator.pop(context); // Navigate back on successful sign up
+                        await widget.supabaseClient.auth
+                            .signUp(email: email, password: password);
+                        Navigator.pop(
+                            context); // Navigate back on successful sign up
                       }
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all<Size>(Size(double.infinity, 50)), // Full width button
-                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF1A1A1A)), // Black background color
+                      minimumSize: MaterialStateProperty.all<Size>(
+                          Size(double.infinity, 50)), // Full width button
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Color(0xFF1A1A1A)), // Black background color
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                          borderRadius:
+                              BorderRadius.circular(10.0), // Rounded corners
                         ),
                       ),
                     ),
@@ -410,6 +454,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 }
+
 class LoginScreen extends StatefulWidget {
   final SupabaseClient supabaseClient;
 
@@ -488,7 +533,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintStyle: TextStyle(color: Colors.grey),
                       fillColor: Color(0xFFf1f5f9),
                       filled: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      contentPadding: EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 12.0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         borderSide: BorderSide.none,
@@ -499,7 +545,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email address';
                       }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[a-zA-Z]{2,}$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email address';
                       }
                       return null;
@@ -513,7 +560,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintStyle: TextStyle(color: Colors.grey),
                       fillColor: Color(0xFFf1f5f9),
                       filled: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      contentPadding: EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 12.0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         borderSide: BorderSide.none,
@@ -536,7 +584,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         final password = _passwordController.text.trim();
 
                         // Perform login using Supabase
-                        final response = await widget.supabaseClient.auth.signInWithPassword(
+                        final response =
+                            await widget.supabaseClient.auth.signInWithPassword(
                           email: email,
                           password: password,
                         );
@@ -547,7 +596,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => MyHomePage(title: 'Flutter App Home Page'),
+                              builder: (context) =>
+                                  MyHomePage(title: 'Flutter App Home Page'),
                             ),
                           );
                         } else {
@@ -557,8 +607,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all<Size>(Size(double.infinity, 50)),
-                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF1A1A1A)),
+                      minimumSize: MaterialStateProperty.all<Size>(
+                          Size(double.infinity, 50)),
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(Color(0xFF1A1A1A)),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0),
@@ -587,7 +639,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => SignUpScreen(supabaseClient: widget.supabaseClient),
+                    builder: (context) =>
+                        SignUpScreen(supabaseClient: widget.supabaseClient),
                   ),
                 );
               },
@@ -618,7 +671,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -654,6 +706,7 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
+
   @override
   void initState() {
     super.initState();
@@ -672,7 +725,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void resetEventDataIfNeeded() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    DateTime? lastRefreshDate = DateTime.tryParse(prefs.getString('lastRefreshDate') ?? '');
+    DateTime? lastRefreshDate =
+        DateTime.tryParse(prefs.getString('lastRefreshDate') ?? '');
     DateTime currentDate = DateTime.now();
     if (lastRefreshDate == null || lastRefreshDate.day != currentDate.day) {
       // Reset eventData if it's a new day
@@ -694,7 +748,8 @@ class _MyHomePageState extends State<MyHomePage> {
     String eventDataJson = prefs.getString('eventData') ?? '[]';
     setState(() {
       eventData = List<Map<String, String>>.from(
-        (jsonDecode(eventDataJson) as List).map((e) => Map<String, String>.from(e)),
+        (jsonDecode(eventDataJson) as List)
+            .map((e) => Map<String, String>.from(e)),
       );
     });
   }
@@ -705,38 +760,52 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     saveEventData(); // Save updated eventData to SharedPreferences
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: HomeScreen(
-        emailPrefix: emailPrefix,
-        eventData: eventData,
-        deleteEvent: deleteEvent, // Pass deleteEvent function
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Container(
-        margin: EdgeInsets.only(bottom: 70.0),
-        child: FloatingActionButton(
-          onPressed: showGeminiPrompt,
-          backgroundColor: Color(0xFF1a1a1a),
-          child: Icon(Icons.chat, color: Colors.white),
-      ),
-    ));
+        backgroundColor: Colors.white,
+        body: HomeScreen(
+          emailPrefix: emailPrefix,
+          eventData: eventData,
+          deleteEvent: deleteEvent, // Pass deleteEvent function
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Container(
+          margin: EdgeInsets.only(bottom: 70.0),
+          child: FloatingActionButton(
+            onPressed: showGeminiPrompt,
+            backgroundColor: Color(0xFF1a1a1a),
+            child: Icon(Icons.chat, color: Colors.white),
+          ),
+        ));
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  final String emailPrefix;
+class HomeScreen extends StatefulWidget {
+  String emailPrefix;
   final List<Map<String, String>> eventData;
   final Function(int) deleteEvent; // Define deleteEvent function
 
-  HomeScreen({required this.emailPrefix, required this.eventData, required this.deleteEvent});
+  HomeScreen(
+      {required this.emailPrefix,
+      required this.eventData,
+      required this.deleteEvent});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool editUserName = false;
+  final TextEditingController uNameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    int pendingTasks = eventData.length; // Number of event cards/tasks
-    String weekStatus = pendingTasks < 4 ? 'You Have a Pretty Light Day' : 'You Have a Pretty Busy Day';
+    int pendingTasks = widget.eventData.length; // Number of event cards/tasks
+    String weekStatus = pendingTasks < 4
+        ? 'You Have a Pretty Light Day'
+        : 'You Have a Pretty Busy Day';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -762,17 +831,26 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Hi, $emailPrefix',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  editUserName
+                      ? getEditNameView(widget.emailPrefix)
+                      : TextButton(
+                          onPressed: () {
+                            setState(() {
+                              editUserName = true;
+                            });
+                          },
+                          child: Text(
+                            'Hi, ${widget.emailPrefix}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )),
                   SizedBox(height: 8),
                 ],
               ),
@@ -801,7 +879,8 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.work, color: Colors.white, size: 16),
                         SizedBox(width: 4),
-                        Text('$pendingTasks tasks', style: TextStyle(color: Colors.white)),
+                        Text('$pendingTasks tasks',
+                            style: TextStyle(color: Colors.white)),
                         SizedBox(width: 2),
                       ],
                     ),
@@ -811,7 +890,8 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
               child: Text(
                 'List Of Tasks',
                 style: GoogleFonts.poppins(
@@ -823,12 +903,13 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: eventData.length,
+                itemCount: widget.eventData.length,
                 itemBuilder: (context, index) {
                   return EventCard(
-                    event: eventData[index],
+                    event: widget.eventData[index],
                     onDelete: () {
-                      deleteEvent(index); // Call deleteEvent with index
+                      widget.deleteEvent(index); // Call deleteEvent with index
+                      _notifyService.cancelEventNotification(index);
                     },
                   );
                 },
@@ -861,16 +942,68 @@ class HomeScreen extends StatelessWidget {
               break;
             case 1:
               Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CalendarPage(eventData: eventData)),
-              );
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => EventCalenderNew(eventData: widget.eventData,))
+                          // EventCalender(eventData: widget.eventData))
+                  // builder: (context) => CalendarPage(eventData: widget.eventData)),
+                  );
               break;
           }
         },
       ),
     );
   }
+
+  getEditNameView(String username) {
+    return Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+      Expanded(
+          child: TextField(
+        controller: uNameController,
+        style: TextStyle(
+            color: Colors.black, fontSize: 20, fontWeight: FontWeight.w400),
+        decoration: InputDecoration(
+            hintStyle: TextStyle(
+                color: Colors.black26,
+                fontSize: 20,
+                fontWeight: FontWeight.w400),
+            hintText: "Enter UserName"),
+      )),
+      Padding(
+          padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
+          child: IconButton(
+              onPressed: () {
+                setState(() {
+                  editUserName = false;
+                });
+              },
+              icon: Icon(
+                color: Color.fromARGB(255, 26, 26, 26),
+                Icons.close,
+                size: 30,
+              ))),
+      IconButton(
+          onPressed: () {
+            widget.emailPrefix = uNameController.text;
+            storeUserEmailLocally(uNameController.text);
+            setState(() {
+              editUserName = false;
+            });
+          },
+          icon: Icon(
+            color: Color.fromARGB(255, 26, 26, 26),
+            Icons.check,
+            size: 30,
+          ))
+    ]);
+  }
+
+  void storeUserEmailLocally(String email) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userEmail', email);
+  }
 }
+
 class EventCard extends StatelessWidget {
   final Map<String, String> event;
   final Function onDelete; // New parameter for onDelete function
@@ -891,7 +1024,8 @@ class EventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align delete button to the right
+              mainAxisAlignment: MainAxisAlignment
+                  .spaceBetween, // Align delete button to the right
               children: [
                 Row(
                   children: [
@@ -908,7 +1042,8 @@ class EventCard extends StatelessWidget {
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Color(0xFF1A1A1A)), // Delete icon button
+                  icon: Icon(Icons.delete,
+                      color: Color(0xFF1A1A1A)), // Delete icon button
                   onPressed: () {
                     onDelete(); // Call onDelete function when pressed
                   },
@@ -963,109 +1098,167 @@ class _GeminiPromptState extends State<GeminiPrompt> {
   final TextEditingController _controller = TextEditingController();
   String _response = '';
 
-Future<void> _submitPromptToGemini(String prompt) async {
-  final gemini = Gemini.instance; // Initialize Gemini instance
+  Future<void> _submitPromptToGemini(String prompt) async {
+    final gemini = Gemini.instance; // Initialize Gemini instance
 
-  try {
-    // Get current time formatted in 24-hour format
-    String currentTime = DateFormat.Hm().format(DateTime.now());
+    try {
+      // Get current time formatted in 24-hour format
+      String currentTime = DateFormat.Hm().format(DateTime.now());
 
-    // Construct the prompt message with the current time included
-    String promptWithMessage = '$prompt\nUse This Format:\n'
-        'No Of Tasks = (x)\n'
-        'Task 1) # (NAME OF TASK) # START TIME - END TIME\n'
-        'Do not use any bullet points or anything extra as this response will be decoded by a program that only accepts responses in the provided format.\n'
-        'Use 24-hour format for the time.\n'
-        '*MAKE SURE TO INCLUDE THE # OR ELSE THE RESPONSE WONT BE DECODED*\n'
-        '*MAKE SURE YOU GIVE THE START TIME FROM THE **NEXT PERFECT HOUR AFTER ($currentTime)*.\n'
-        '*DONT WRITE ANYTHING EXTRA THATS NOT IN THE FORMAT AND RESPOND IN 24HR FORMAT .**\n';
+      // Construct the prompt message with the current time included
+      String promptWithMessage = prompt;
 
-    // Define events variable and add event details to the prompt
-    List<Map<String, String>> events = []; // Replace with your actual events list
+      // Define events variable and add event details to the prompt
+      List<Map<String, String>> events =
+          []; // Replace with your actual events list
 
-    // Create a set to track used timings
-    Set<String> usedTimingsSet = {};
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String eventDataJson = prefs.getString('eventData') ?? '[]';
+      events = List<Map<String, String>>.from(
+        (jsonDecode(eventDataJson) as List)
+            .map((e) => Map<String, String>.from(e)),
+      );
 
-    for (int i = 0; i < events.length; i++) {
-      String? startTime = events[i]['startTime']; // nullable String
-      String? endTime = events[i]['endTime']; // nullable String
+      // Create a set to track used timings
+      // Set<String> usedTimingsSet = {};
+      String usedTimingsSet = "";
 
-      // Ensure startTime and endTime are not null before using them
-      if (startTime != null && endTime != null) {
-        String formattedTiming = '$startTime - $endTime';
+      for (int i = 0; i < events.length; i++) {
+        String? startTime = events[i]['startTime']; // nullable String
+        String? endTime = events[i]['endTime']; // nullable String
 
-        // Ensure the timings are unique before adding to the set
-        if (!usedTimingsSet.contains(formattedTiming)) {
-          promptWithMessage +=
-              'TASK ${i + 1} == ${events[i]['name']} == $startTime - $endTime\n\n';
+        // Ensure startTime and endTime are not null before using them
+        if (startTime != null && endTime != null) {
+          String formattedTiming = '$startTime - $endTime';
 
-          usedTimingsSet.add(formattedTiming); // Add to used timings set
+          usedTimingsSet += formattedTiming;
+          if (i < (events.length - 1)) {
+            usedTimingsSet += ", ";
+          }
+          // Ensure the timings are unique before adding to the set
+          // if (!usedTimingsSet.contains(formattedTiming)) {
+          //   promptWithMessage +=
+          //       'TASK ${i + 1} == ${events[i]['name']} == $startTime - $endTime\n\n';
+
+          //   usedTimingsSet.add(formattedTiming); // Add to used timings set
+          // }
         }
       }
+
+      promptWithMessage += usedTimingsSet.length > 0
+          ? "\n*AVOID THE TIME SLOTS " + usedTimingsSet + "*\n"
+          : "";
+      // Add all used timings from event cards to ensure they are not repeated
+      // List<String> usedTimings = usedTimingsSet.toList();
+
+      // promptWithMessage += 'Busy Timings: ${usedTimings.join(', ')}';
+
+      promptWithMessage +=
+      '    \nUse This Format:\n'
+          'No Of Tasks = (x)\n'
+          'Task 1) # (NAME OF TASK) # START TIME - END TIME\n'
+          'Do not use any bullet points or anything extra as this response will be decoded by a program that only accepts responses in the provided format.\n' +
+              'Use 24-hour format for the time.\n' +
+              '*MAKE SURE TO INCLUDE THE # OR ELSE THE RESPONSE WONT BE DECODED*\n' +
+              '*MAKE SURE YOU GIVE THE START TIME FROM THE **NEXT PERFECT HOUR AFTER ($currentTime)*.\n' +
+              '*DONT WRITE ANYTHING EXTRA THATS NOT IN THE FORMAT AND RESPOND IN 24HR FORMAT .**\n';
+
+      print("prompt message ${promptWithMessage}");
+
+      // String tmpPromptMsg =
+      //     "Code for two hours and lunch for for half-hour that avoids the time slots 18:00 - 19:00, 19:30 - 20:30\n" +
+      //         "Use This Format:\n" +
+      //         "No Of Tasks = (x)\n" +
+      //         "Task 1) # (NAME OF TASK) # START TIME - END TIME\n" +
+      //         "Do not use any bullet points or anything extra as this response will be decoded by a program that only accepts responses in the provided format.\n" +
+      //         "Use 24-hour format for the time.\n" +
+      //         "*MAKE SURE TO INCLUDE THE # OR ELSE THE RESPONSE WONT BE DECODED*\n" +
+      //         "*MAKE SURE YOU GIVE THE START TIME FROM THE **NEXT PERFECT HOUR AFTER (18:18)*.\n" +
+      //         "*AVOID THE TIME SLOTS 18:00 - 19:00, 19:30 - 20:30\n*"
+      //             "*DONT WRITE ANYTHING EXTRA THATS NOT IN THE FORMAT AND RESPOND IN 24HR FORMAT .**";
+
+      // print(tmpPromptMsg);
+
+      // Send prompt to Gemini and receive response
+      final Candidates? response = await gemini.text(promptWithMessage);
+
+      setState(() {
+        _response = response?.output ??
+            'No response received'; // Display Gemini's response
+        _controller.clear(); // Clear the text field after submission
+      });
+
+      // Parse response into a list of event data
+      List<Map<String, String>> parsedEventData =
+          _parseEventData(response?.output, events.length);
+      widget
+          .onSubmit(parsedEventData); // Pass parsed data back to parent widget
+    } catch (e) {
+      print('Error sending prompt to Gemini: $e');
+      // Handle error scenario, such as showing a snackbar
     }
-
-    // Add all used timings from event cards to ensure they are not repeated
-    List<String> usedTimings = usedTimingsSet.toList();
-
-    promptWithMessage += 'Busy Timings: ${usedTimings.join(', ')}';
-
-    // Send prompt to Gemini and receive response
-    final response = await gemini.text(promptWithMessage);
-
-    setState(() {
-      _response = response?.output ?? 'No response received'; // Display Gemini's response
-      _controller.clear(); // Clear the text field after submission
-    });
-
-    // Parse response into a list of event data
-    List<Map<String, String>> parsedEventData = _parseEventData(response?.output);
-    widget.onSubmit(parsedEventData); // Pass parsed data back to parent widget
-  } catch (e) {
-    print('Error sending prompt to Gemini: $e');
-    // Handle error scenario, such as showing a snackbar
   }
-}
 
-List<Map<String, String>> _parseEventData(String? response) {
-  List<Map<String, String>> eventData = [];
+  List<Map<String, String>> _parseEventData(
+      String? response, int prevEventCount) {
+    List<Map<String, String>> eventData = [];
 
-  if (response != null && response.isNotEmpty) {
-    List<String> lines = response.split('\n');
-    String? noOfTasks;
+    if (response != null && response.isNotEmpty) {
+      List<String> lines = response.split('\n');
+      String? noOfTasks;
 
-    for (String line in lines) {
-      if (line.startsWith('No Of Tasks = ')) {
-        noOfTasks = line.substring('No Of Tasks = '.length).trim();
-      } else if (line.startsWith('Task')) {
-        // Assuming line format: Task 1) # NAME OF THE TASK # START TIME - END TIME
-        List<String> parts = line.split('#');
+      for (String line in lines) {
+        if (line.startsWith('No Of Tasks = ')) {
+          noOfTasks = line.substring('No Of Tasks = '.length).trim();
+        } else if (line.startsWith('Task')) {
+          // Assuming line format: Task 1) # NAME OF THE TASK # START TIME - END TIME
+          List<String> parts = line.split('#');
 
-        if (parts.length >= 3) {
-          String name = parts[1].trim();
-          String timeFrame = parts[2].trim();
+          if (parts.length >= 3) {
+            String name = parts[1].trim();
+            String timeFrame = parts[2].trim();
 
-          // Extract start and end time from timeFrame
-          // Example timeFrame: "NAME OF THE TASK # START TIME - END TIME"
-          int startIndex = timeFrame.indexOf('#') + 1;
-          int endIndex = timeFrame.lastIndexOf('-');
+            // Extract start and end time from timeFrame
+            // Example timeFrame: "NAME OF THE TASK # START TIME - END TIME"
+            int startIndex = timeFrame.indexOf('#') + 1;
+            int endIndex = timeFrame.lastIndexOf('-');
 
-          if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
-            String startTime = timeFrame.substring(startIndex, endIndex).trim();
-            String endTime = timeFrame.substring(endIndex + 1).trim();
+            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+              String startTime =
+                  timeFrame.substring(startIndex, endIndex).trim();
+              String endTime = timeFrame.substring(endIndex + 1).trim();
 
-            eventData.add({
-              'name': name,
-              'startTime': startTime,
-              'endTime': endTime,
-            });
+              DateTime now = DateTime.now();
+              var timings = startTime.split(":");
+              int startHour = int.parse(timings[0]);
+              int startMinutes = int.parse(timings[1].substring(0, 2));
+              var startDateTime =
+                  DateTime(now.year, now.month, now.day, startHour, startMinutes);
+              startDateTime = startDateTime.subtract(Duration(minutes: 5));
+
+              print("new event number ${prevEventCount + eventData.length}");
+              int eventNotifyId = prevEventCount + eventData.length;
+              _notifyService.scheduleNotification(
+                  "New Event",
+                  "${name} ${startTime} - ${endTime}",
+                  eventNotifyId,
+                  startDateTime.day,
+                  startDateTime.hour,
+                  startDateTime.minute);
+              eventData.add({
+                'name': name,
+                'startTime': startTime,
+                'endTime': endTime,
+              });
+            }
           }
         }
       }
     }
+
+    return eventData;
   }
 
-  return eventData;
-}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1084,7 +1277,8 @@ List<Map<String, String>> _parseEventData(String? response) {
                   if (_response.isNotEmpty)
                     Container(
                       margin: EdgeInsets.only(bottom: 10.0),
-                      padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                      padding: EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 16.0),
                       decoration: BoxDecoration(
                         color: Colors.blueGrey[100],
                         borderRadius: BorderRadius.circular(10.0),
@@ -1096,7 +1290,8 @@ List<Map<String, String>> _parseEventData(String? response) {
                   if (_response.isNotEmpty)
                     Container(
                       margin: EdgeInsets.only(bottom: 10.0),
-                      padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                      padding: EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 16.0),
                       decoration: BoxDecoration(
                         color: Colors.blueGrey[100],
                         borderRadius: BorderRadius.circular(10.0),
@@ -1183,8 +1378,10 @@ class CalendarPage extends StatelessWidget {
 
   Widget _buildCalendarHeader() {
     final today = DateTime.now();
-    final startOfWeek = today.subtract(Duration(days: today.weekday - DateTime.monday));
-    final daysOfWeek = List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
+    final startOfWeek =
+        today.subtract(Duration(days: today.weekday - DateTime.monday));
+    final daysOfWeek =
+        List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
 
     return Container(
       padding: EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
@@ -1211,7 +1408,9 @@ class CalendarPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: daysOfWeek.map((day) {
-              final isToday = day.day == today.day && day.month == today.month && day.year == today.year;
+              final isToday = day.day == today.day &&
+                  day.month == today.month &&
+                  day.year == today.year;
               return Expanded(
                 child: Column(
                   children: [
@@ -1227,7 +1426,8 @@ class CalendarPage extends StatelessWidget {
                     SizedBox(height: 5),
                     CircleAvatar(
                       radius: 15,
-                      backgroundColor: isToday ? Color(0xFF1A1A1A) : Colors.transparent,
+                      backgroundColor:
+                          isToday ? Color(0xFF1A1A1A) : Colors.transparent,
                       child: Text(
                         day.day.toString(),
                         style: GoogleFonts.poppins(
@@ -1287,9 +1487,12 @@ class CalendarPage extends StatelessWidget {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: events.map((event) {
-                  DateTime startTime = DateTime.parse('2024-01-01 ${event['startTime']}:00');
-                  DateTime endTime = DateTime.parse('2024-01-01 ${event['endTime']}:00');
-                  double eventHeight = endTime.difference(startTime).inMinutes.toDouble();
+                  DateTime startTime =
+                      DateTime.parse('2024-01-01 ${event['startTime']}:00');
+                  DateTime endTime =
+                      DateTime.parse('2024-01-01 ${event['endTime']}:00');
+                  double eventHeight =
+                      endTime.difference(startTime).inMinutes.toDouble();
 
                   return Padding(
                     padding: const EdgeInsets.only(left: 32.0, bottom: 8.0),
@@ -1359,11 +1562,13 @@ class CalendarPage extends StatelessWidget {
             Navigator.pushNamed(context, '/home');
             break;
           case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CalendarPage(eventData: eventData)),
-              );
-              break;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                   builder: (context) => EventCalenderNew(eventData: eventData)),
+                  // builder: (context) => CalendarPage(eventData: eventData)),
+            );
+            break;
         }
       },
     );
