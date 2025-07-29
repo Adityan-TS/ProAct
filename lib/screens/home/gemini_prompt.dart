@@ -294,7 +294,7 @@ class _GeminiPromptState extends State<GeminiPrompt> {
                   children: [
                     Icon(CupertinoIcons.chat_bubble_text_fill,color: Get.theme.scaffoldBackgroundColor,size: 25,),
                     SizedBox(width: 15,),
-                    Text("ProAct+ AI",style: TextStyle(color: Get.theme.scaffoldBackgroundColor,fontWeight: FontWeight.w500,fontSize: 16),)
+                    Text("ProAct Ai",style: TextStyle(color: Get.theme.scaffoldBackgroundColor,fontWeight: FontWeight.w500,fontSize: 16),)
                   ],
                 ),
               ),
