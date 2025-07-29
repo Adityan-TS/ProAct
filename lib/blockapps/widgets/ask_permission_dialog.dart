@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/state_manager.dart';
 import 'package:proact/blockapps/executables/controllers/method_channel_controller.dart';
-import 'package:proact/main.dart';
-
 import '../services/constant.dart';
 
 askPermissionBottomSheet(context) {
@@ -71,114 +69,102 @@ class AskPermissionBootomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    MyHomePage(title: 'Flutter App Home Page')),
-            ModalRoute.withName("/Home"));
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            width: size.width,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: GetBuilder<MethodChannelController>(builder: (state) {
-              return SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      child: Text(
-                        "AppLock needs system permissions to work with.",
-                        textAlign: TextAlign.center,
-                        style: MyFont().subtitle(
-                          color: Color(0xFF1A1A1A),
-                          fontweight: FontWeight.w400,
-                          fontsize: 16,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if (!state.isOverlayPermissionGiven)
-                            GestureDetector(
-                              onTap: () async {
-                                await state.askOverlayPermission();
-                              },
-                              child: permissionWidget(
-                                context,
-                                "System overlay",
-                                state.isOverlayPermissionGiven,
-                              ),
-                            ),
-                          if (!state.isUsageStatPermissionGiven)
-                            GestureDetector(
-                              onTap: () async {
-                                await state.askUsageStatsPermission();
-                                print("object");
-                              },
-                              child: permissionWidget(
-                                context,
-                                "Usage accesss",
-                                state.isUsageStatPermissionGiven,
-                              ),
-                            ),
-                          if (!state.isNotificationPermissionGiven)
-                            GestureDetector(
-                              onTap: () async {
-                                await state.askNotificationPermission();
-                              },
-                              child: permissionWidget(
-                                context,
-                                "Push notification",
-                                state.isNotificationPermissionGiven,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    MaterialButton(
-                      color: Color(0xFF1A1A1A),
-                      onPressed: () async {
-                        if (await state.checkOverlayPermission() &&
-                            await state.checkUsageStatePermission() &&
-                            await state.checkNotificationPermission()) {
-                          Navigator.pop(context);
-                        } else {
-                          Fluttertoast.showToast(
-                              msg: "Required permissions not given !");
-                        }
-                      },
-                      child: Text(
-                        "Confirm",
-                        style: MyFont().subtitle(
-                          color: Colors.white,
-                          fontweight: FontWeight.w400,
-                          fontsize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.0),
           ),
+          child: GetBuilder<MethodChannelController>(builder: (state) {
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
+                    child: Text(
+                      "AppLock needs system permissions to work with.",
+                      textAlign: TextAlign.center,
+                      style: MyFont().subtitle(
+                        color: Color(0xFF1A1A1A),
+                        fontweight: FontWeight.w400,
+                        fontsize: 16,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        if (!state.isOverlayPermissionGiven)
+                          GestureDetector(
+                            onTap: () async {
+                              await state.askOverlayPermission();
+                            },
+                            child: permissionWidget(
+                              context,
+                              "System overlay",
+                              state.isOverlayPermissionGiven,
+                            ),
+                          ),
+                        if (!state.isUsageStatPermissionGiven)
+                          GestureDetector(
+                            onTap: () async {
+                              await state.askUsageStatsPermission();
+                              print("object");
+                            },
+                            child: permissionWidget(
+                              context,
+                              "Usage accesss",
+                              state.isUsageStatPermissionGiven,
+                            ),
+                          ),
+                        if (!state.isNotificationPermissionGiven)
+                          GestureDetector(
+                            onTap: () async {
+                              await state.askNotificationPermission();
+                            },
+                            child: permissionWidget(
+                              context,
+                              "Push notification",
+                              state.isNotificationPermissionGiven,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  MaterialButton(
+                    color: Color(0xFF1A1A1A),
+                    onPressed: () async {
+                      if (await state.checkOverlayPermission() &&
+                          await state.checkUsageStatePermission() &&
+                          await state.checkNotificationPermission()) {
+                        Navigator.pop(context);
+                      } else {
+                        Fluttertoast.showToast(
+                            msg: "Required permissions not given !");
+                      }
+                    },
+                    child: Text(
+                      "Confirm",
+                      style: MyFont().subtitle(
+                        color: Colors.white,
+                        fontweight: FontWeight.w400,
+                        fontsize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ),
       ),
     );

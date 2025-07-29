@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:device_apps/device_apps.dart';
+import 'package:new_device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_switch/flutter_switch.dart';
 import 'package:get/instance_manager.dart';
@@ -59,7 +59,7 @@ class UnlockedAppScreen extends StatelessWidget {
                 },
                 icon: Icon(
                   Icons.disabled_by_default_rounded,
-                  color: Color(0xFF1a1a1a),
+                  color: Theme.of(context).iconTheme.color,
                 ),
               ),
             ),
@@ -67,9 +67,7 @@ class UnlockedAppScreen extends StatelessWidget {
           centerTitle: true,
           title: Text(
             "AppLock",
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Color(0xFF1a1a1a),
-                ),
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(),
           ),
           actions: [
             // Padding(
@@ -191,7 +189,8 @@ class UnlockedAppScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: Color(0xFF1a1a1a),
+                                color: Theme.of(context).textTheme.headlineMedium?.color ?? Colors.black
+                                ,
                               ),
                             ),
                             child: Row(
@@ -243,10 +242,7 @@ class UnlockedAppScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         app.appName,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium!
-                                            .copyWith(color: Color(0xFF1a1a1a)),
+                                        style: TextStyle(fontSize: 16),
                                       ),
                                       Text(
                                         "${app.versionName}",
@@ -254,7 +250,6 @@ class UnlockedAppScreen extends StatelessWidget {
                                             .textTheme
                                             .bodyMedium!
                                             .copyWith(
-                                              color: Color(0xFF1a1a1a),
                                               fontSize: 12,
                                             ),
                                       ),

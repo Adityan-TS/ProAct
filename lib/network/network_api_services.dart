@@ -30,7 +30,7 @@ class NetworkApiServices {
               "Content-Type": "application/json",
               "Accept": "application/json",
               "Authorization":
-                  "Bearer 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"
+                  "Bearer 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"
             },
             body: data,
           )

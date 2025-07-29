@@ -3,13 +3,10 @@ import 'dart:developer';
 import 'package:proact/main.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../services/constant.dart';
+import '../../../utils/hive_store_util.dart';
 
 class PasswordController extends GetxController implements GetxService {
-  SharedPreferences prefs;
-  PasswordController({required this.prefs});
   bool isConfirm = false;
   String passcode = "";
   String addedPassCode = "";
@@ -45,7 +42,7 @@ class PasswordController extends GetxController implements GetxService {
       }
     } else {
       if (addedPassCode == passcode) {
-        prefs.setString(AppConstants.setPassCode, passcode);
+        HiveStoreUtil.setString(HiveStoreUtil.passCode,passcode);
         navigatorKey.currentState!.pop();
       } else {
         Fluttertoast.showToast(msg: "passcode does not match");

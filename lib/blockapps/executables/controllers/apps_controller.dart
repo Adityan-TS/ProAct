@@ -1,18 +1,15 @@
 import 'dart:developer';
 import 'dart:typed_data';
-import 'package:device_apps/device_apps.dart';
+import 'package:new_device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proact/blockapps/executables/controllers/method_channel_controller.dart';
 import 'package:proact/blockapps/services/constant.dart';
-import '../../models/application_model.dart';
+import '../../../utils/hive_store_util.dart';
+import '../../../model/application_model.dart';
 
 class AppsController extends GetxController implements GetxService {
-  SharedPreferences prefs;
-  AppsController({required this.prefs});
-
   String? dummyPasscode;
   int? selectQuestion;
   TextEditingController typeAnswer = TextEditingController();
@@ -42,31 +39,16 @@ class AppsController extends GetxController implements GetxService {
   }
 
   savePasscode(counter) {
-    prefs.setString(AppConstants.setPassCode, counter);
+    HiveStoreUtil.setString(HiveStoreUtil.passCode,counter);
     Get.find<MethodChannelController>().setPassword();
-    log("${prefs.getString(AppConstants.setPassCode)}", name: "save passcode");
   }
 
   getPasscode() {
-    return prefs.getString(AppConstants.setPassCode) ?? "";
+    return HiveStoreUtil.getString(HiveStoreUtil.passCode);
   }
 
   removePasscode() {
-    return prefs.remove(AppConstants.setPassCode);
-  }
-
-  setSplash() {
-    prefs.setBool("Splash", true);
-    return prefs.getBool("Splash");
-  }
-
-  getSplash() async {
-    final prefs = await SharedPreferences.getInstance();
-    if ((prefs.getBool("Splash")) != null) {
-      return true;
-    } else {
-      return false;
-    }
+    return HiveStoreUtil.setString(HiveStoreUtil.passCode, '');
   }
 
   excludeApps() {
@@ -167,16 +149,14 @@ class AppsController extends GetxController implements GetxService {
     } catch (e) {
       log("-------$e", name: "addToLockedApps");
     }
-    prefs.setString(
-        AppConstants.lockedApps, applicationDataModelToJson(lockList));
+    HiveStoreUtil.setString(HiveStoreUtil.lockedApps,  applicationDataModelToJson(lockList));
     addToAppsLoading = false;
     update([addRemoveToUnlockUpdate]);
   }
 
   getLockedApps() {
     try {
-      lockList = applicationDataModelFromJson(
-          prefs.getString(AppConstants.lockedApps) ?? '');
+      lockList = applicationDataModelFromJson(HiveStoreUtil.getString(HiveStoreUtil.lockedApps));
       selectLockList.clear();
       log('${lockList.length}', name: "STORED LIST");
       for (var e in lockList) {

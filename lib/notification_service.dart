@@ -2,6 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+NotificationService notifyService = NotificationService();
+
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -57,8 +59,8 @@ class NotificationService {
     try {
       await _flutterLocalNotificationsPlugin.zonedSchedule(
           id, title, body, scheduleTime, _notificationDetails,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
+          // uiLocalNotificationDateInterpretation:
+          //     UILocalNotificationDateInterpretation.absoluteTime,
           androidScheduleMode: AndroidScheduleMode.exact);
     } catch (e) {
       print("notification error ${e}");

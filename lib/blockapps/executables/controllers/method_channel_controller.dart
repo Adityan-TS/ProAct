@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:get/instance_manager.dart';
 import 'package:get/state_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proact/blockapps/executables/controllers/apps_controller.dart';
 import 'package:proact/blockapps/services/constant.dart';
+import 'package:proact/utils/hive_store_util.dart';
 import 'package:usage_stats/usage_stats.dart';
 
 import 'permission_controller.dart';
@@ -79,9 +79,8 @@ class MethodChannelController extends GetxController implements GetxService {
   }
 
   Future setPassword() async {
-    final prefs = await SharedPreferences.getInstance();
     try {
-      String data = prefs.getString(AppConstants.setPassCode) ?? "";
+      String data = HiveStoreUtil.getString(HiveStoreUtil.passCode) ?? "";
       log(data, name: "PASSWORD--");
       if (data != "") {
         await platform.invokeMethod('setPasswordInNative', data).then((value) {
