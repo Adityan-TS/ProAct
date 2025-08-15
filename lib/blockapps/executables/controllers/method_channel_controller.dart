@@ -102,6 +102,26 @@ class MethodChannelController extends GetxController implements GetxService {
     }
   }
 
+  Future startRobustAppBlock() async {
+    try {
+      await platform.invokeMethod('startRobustAppBlock', "").then((value) {
+        log("$value", name: "startRobustAppBlock CALLED");
+      });
+    } on PlatformException catch (e) {
+      log("Failed to Invoke: '${e.message}'.");
+    }
+  }
+
+  Future stopRobustAppBlock() async {
+    try {
+      await platform.invokeMethod('stopRobustAppBlock', "").then((value) {
+        log("$value", name: "stopRobustAppBlock CALLED");
+      });
+    } on PlatformException catch (e) {
+      log("Failed to Invoke: '${e.message}'.");
+    }
+  }
+
   Future<bool> askNotificationPermission() async {
     // await AppSettings.openAppSettings();
     await Get.find<PermissionController>()

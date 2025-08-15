@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E6000000"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:clickable="true">
+
+    <!-- App Logo/Icon -->
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/ic_launcher"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Main Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_background"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:gravity="center"
+        android:elevation="8dp">
+
+        <!-- Message Text -->
+        <TextView
+            android:id="@+id/message_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎯 Focus Time\n\nStay focused on your current task!\n\nEnter your password to unlock:"
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:textAlignment="center"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Password Input -->
+        <EditText
+            android:id="@+id/password_input"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/input_background"
+            android:hint="Enter password"
+            android:textSize="16sp"
+            android:textColor="#333333"
+            android:textColorHint="#888888"
+            android:padding="16dp"
+            android:inputType="textPassword"
+            android:imeOptions="actionDone"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Error Text -->
+        <TextView
+            android:id="@+id/error_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Incorrect password"
+            android:textSize="14sp"
+            android:textColor="#E53E3E"
+            android:textAlignment="center"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Unlock Button -->
+        <Button
+            android:id="@+id/unlock_button"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/button_background"
+            android:text="UNLOCK"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:elevation="2dp" />
+
+        <!-- Info Text -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This app is blocked during your focus time to help you stay productive."
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textAlignment="center"
+            android:layout_marginTop="24dp"
+            android:lineSpacingExtra="2dp" />
+
+    </LinearLayout>
+
+    <!-- Bottom Spacing -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

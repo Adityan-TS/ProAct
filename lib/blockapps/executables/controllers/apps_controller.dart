@@ -141,6 +141,7 @@ class AppsController extends GetxController implements GetxService {
           );
           log("ADD: $selectLockList", name: "addToLockedApps");
           Get.find<MethodChannelController>().addToLockedAppsMethod();
+        Get.find<MethodChannelController>().startRobustAppBlock();
         } else {
           Fluttertoast.showToast(
               msg: "You can add only 16 apps in locked list");

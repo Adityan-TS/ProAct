@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -45,6 +46,7 @@ class MainActivity : FlutterActivity() {
                     val args = call.arguments as HashMap<*, *>
                     println("$args ----- ARGS")
                     val greetings = showCustomNotification(args)
+                    startRobustAppBlockService()
                     result.success(greetings)
                 }
 
@@ -62,6 +64,18 @@ class MainActivity : FlutterActivity() {
 
                 call.method.equals("stopForeground") -> {
                     stopForegroundService()
+                    stopRobustAppBlockService()
+                    result.success("Services stopped")
+                }
+
+                call.method.equals("startRobustAppBlock") -> {
+                    startRobustAppBlockService()
+                    result.success("Robust app block service started")
+                }
+
+                call.method.equals("stopRobustAppBlock") -> {
+                    stopRobustAppBlockService()
+                    result.success("Robust app block service stopped")
                 }
 
                 call.method.equals("askOverlayPermission") -> {
@@ -171,6 +185,20 @@ class MainActivity : FlutterActivity() {
     private fun stopForegroundService() {
         setIfServiceClosed("0")
         stopService(Intent(this, ForegroundService::class.java))
+    }
+
+    private fun startRobustAppBlockService() {
+        val intent = Intent(this, RobustAppBlockService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun stopRobustAppBlockService() {
+        val intent = Intent(this, RobustAppBlockService::class.java)
+        stopService(intent)
     }
 
     private fun checkOverlayPermission(): Boolean {

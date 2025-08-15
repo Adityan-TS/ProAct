@@ -36,6 +36,7 @@ class _BlockedHomePageState extends State<BlockedHomePage> {
           .getPermission(Permission.ignoreBatteryOptimizations);
       getPermissions();
       Get.find<MethodChannelController>().addToLockedAppsMethod();
+      Get.find<MethodChannelController>().startRobustAppBlock();
     });
   }
 
