@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:new_device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,35 @@ import 'package:proact/blockapps/executables/controllers/method_channel_controll
 import 'package:proact/blockapps/services/constant.dart';
 import '../../../utils/hive_store_util.dart';
 import '../../../model/application_model.dart';
+
+// #region debug-point A:dbg-reporter
+const String _dbgUrl =
+    String.fromEnvironment('DEBUG_SERVER_URL', defaultValue: 'http://127.0.0.1:7777/event');
+const String _dbgSessionId =
+    String.fromEnvironment('DEBUG_SESSION_ID', defaultValue: 'block-apps-tab-crash');
+void _dbg(String hypothesisId, String location, String msg,
+    [Map<String, Object?> data = const {}]) {
+  () async {
+    try {
+      final payload = jsonEncode({
+        'sessionId': _dbgSessionId,
+        'runId': 'pre',
+        'hypothesisId': hypothesisId,
+        'location': location,
+        'msg': msg,
+        'data': data,
+        'ts': DateTime.now().millisecondsSinceEpoch,
+      });
+      final client = HttpClient();
+      final req = await client.postUrl(Uri.parse(_dbgUrl));
+      req.headers.contentType = ContentType.json;
+      req.write(payload);
+      await req.close();
+      client.close();
+    } catch (_) {}
+  }();
+}
+// #endregion
 
 class AppsController extends GetxController implements GetxService {
   String? dummyPasscode;
@@ -58,13 +89,31 @@ class AppsController extends GetxController implements GetxService {
   }
 
   getAppsData() async {
-    unLockList = await DeviceApps.getInstalledApplications(
-      includeAppIcons: true,
-      includeSystemApps: true,
-      onlyAppsWithLaunchIntent: true,
-    );
-    excludeApps();
-    update();
+    // #region debug-point A:getAppsData:controller-start
+    _dbg('A', 'apps_controller.dart:getAppsData', '[DEBUG] DeviceApps.getInstalledApplications:start');
+    // #endregion
+    try {
+      unLockList = await DeviceApps.getInstalledApplications(
+        includeAppIcons: true,
+        includeSystemApps: true,
+        onlyAppsWithLaunchIntent: true,
+      );
+      // #region debug-point A:getAppsData:controller-ok
+      _dbg('A', 'apps_controller.dart:getAppsData', '[DEBUG] DeviceApps.getInstalledApplications:ok', {
+        'count': unLockList.length,
+      });
+      // #endregion
+      excludeApps();
+      update();
+    } catch (e, st) {
+      // #region debug-point A:getAppsData:controller-error
+      _dbg('A', 'apps_controller.dart:getAppsData', '[DEBUG] DeviceApps.getInstalledApplications:error', {
+        'error': e.toString(),
+        'stack': st.toString(),
+      });
+      // #endregion
+      rethrow;
+    }
   }
 
   addRemoveFromLockedAppsFromSearch(ApplicationData app) {

@@ -9,9 +9,39 @@ import 'package:proact/constants/constants.dart';
 import 'package:proact/notification_service.dart';
 import 'package:proact/utils/app_urls.dart';
 import 'package:proact/utils/hive_store_util.dart';
+import 'package:proact/utils/utils.dart';
 
 import '../../controller/home_controller.dart';
 import '../../services/http_service.dart';
+
+// #region debug-point A:dbg-reporter
+const String _dbgUrl =
+    String.fromEnvironment('DEBUG_SERVER_URL', defaultValue: 'http://192.168.1.150:7777/event');
+const String _dbgSessionId =
+    String.fromEnvironment('DEBUG_SESSION_ID', defaultValue: 'proact-ai-not-working');
+void _dbg(String hypothesisId, String location, String msg,
+    [Map<String, Object?> data = const {}]) {
+  () async {
+    try {
+      final payload = jsonEncode({
+        'sessionId': _dbgSessionId,
+        'runId': 'pre',
+        'hypothesisId': hypothesisId,
+        'location': location,
+        'msg': msg,
+        'data': data,
+        'ts': DateTime.now().millisecondsSinceEpoch,
+      });
+      final client = HttpClient();
+      final req = await client.postUrl(Uri.parse(_dbgUrl));
+      req.headers.contentType = ContentType.json;
+      req.write(payload);
+      await req.close();
+      client.close();
+    } catch (_) {}
+  }();
+}
+// #endregion
 
 class GeminiPrompt extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onSubmit;
@@ -29,8 +59,155 @@ class _GeminiPromptState extends State<GeminiPrompt> {
   String _message = '';
   HttpService httpService = HttpService();
 
+  int? _extractRequestedDurationMinutes(String input) {
+    final text = input.toLowerCase();
+    if (RegExp(r'\bhalf an hour\b').hasMatch(text)) return 30;
+    if (RegExp(r'\b(an|a|one)\s+hour\b').hasMatch(text)) return 60;
+    final hourMatch =
+        RegExp(r'\bfor\s+(\d+)\s*(hours|hour|hrs|hr)\b').firstMatch(text);
+    if (hourMatch != null) {
+      final hours = int.tryParse(hourMatch.group(1) ?? '');
+      if (hours != null && hours > 0) return hours * 60;
+    }
+    final minMatch =
+        RegExp(r'\bfor\s+(\d+)\s*(minutes|minute|mins|min)\b').firstMatch(text);
+    if (minMatch != null) {
+      final mins = int.tryParse(minMatch.group(1) ?? '');
+      if (mins != null && mins > 0) return mins;
+    }
+    return null;
+  }
+
+  bool _looksLikeSingleTaskRequest(String input) {
+    final text = input.toLowerCase();
+    if (text.contains('\n')) return false;
+    if (text.contains(',')) return false;
+    if (RegExp(r'\b(and|then|also|plus)\b').hasMatch(text)) return false;
+    if (RegExp(r'\btask\s*\d+\b').hasMatch(text)) return false;
+    return true;
+  }
+
+  String _extractTaskTitle(String input) {
+    final text = input.trim();
+    final forIndex = text.toLowerCase().indexOf(' for ');
+    final raw = (forIndex > 0) ? text.substring(0, forIndex) : text;
+    final cleaned = raw
+        .replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (cleaned.isEmpty) return 'Task';
+    return cleaned.substring(0, 1).toUpperCase() + cleaned.substring(1);
+  }
+
+  int _timeToMinutes(String hhmm) {
+    final parts = hhmm.split(':');
+    if (parts.length < 2) return 0;
+    final h = int.tryParse(parts[0].trim()) ?? 0;
+    final m = int.tryParse(parts[1].trim().substring(0, 2)) ?? 0;
+    return (h.clamp(0, 23) * 60) + m.clamp(0, 59);
+  }
+
+  String _minutesToTime(int minutes) {
+    final m = minutes % (24 * 60);
+    final h = (m ~/ 60).toString().padLeft(2, '0');
+    final mm = (m % 60).toString().padLeft(2, '0');
+    return '$h:$mm';
+  }
+
+  List<Map<String, int>> _busyIntervals(List<Map<String, dynamic>> events) {
+    final intervals = <Map<String, int>>[];
+    for (final e in events) {
+      final s = (e['start_time'] ?? '').toString();
+      final en = (e['end_time'] ?? '').toString();
+      if (s.contains(':') && en.contains(':')) {
+        final start = _timeToMinutes(s);
+        final end = _timeToMinutes(en);
+        if (end > start) intervals.add({'start': start, 'end': end});
+      }
+    }
+    intervals.sort((a, b) => (a['start'] ?? 0).compareTo(b['start'] ?? 0));
+    return intervals;
+  }
+
+  List<Map<String, dynamic>> _normalizeSchedule({
+    required List<Map<String, dynamic>> tasks,
+    required List<Map<String, int>> busy,
+    int? forceSingleDurationMinutes,
+    int? earliestStartMinutes,
+  }) {
+    if (tasks.isEmpty) return tasks;
+
+    final now = DateTime.now();
+    final nextPerfectHour = earliestStartMinutes ??
+        ((DateTime(now.year, now.month, now.day, now.hour + 1, 0).hour * 60));
+
+    final source = List<Map<String, dynamic>>.from(tasks);
+
+    if (forceSingleDurationMinutes != null && forceSingleDurationMinutes > 0) {
+      final t = Map<String, dynamic>.from(source.first);
+      final startMin = _timeToMinutes((t['start_time'] ?? '').toString());
+      var start = startMin < nextPerfectHour ? nextPerfectHour : startMin;
+      var end = start + forceSingleDurationMinutes;
+      bool moved;
+      do {
+        moved = false;
+        for (final b in busy) {
+          final bs = b['start'] ?? 0;
+          final be = b['end'] ?? 0;
+          if (start < be && end > bs) {
+            start = be;
+            end = start + forceSingleDurationMinutes;
+            moved = true;
+          }
+        }
+      } while (moved);
+      t['start_time'] = _minutesToTime(start);
+      t['end_time'] = _minutesToTime(end);
+      return [t];
+    }
+
+    final normalized = <Map<String, dynamic>>[];
+    int cursor = nextPerfectHour;
+    for (final raw in source) {
+      final t = Map<String, dynamic>.from(raw);
+      final startMin = _timeToMinutes((t['start_time'] ?? '').toString());
+      final endMin = _timeToMinutes((t['end_time'] ?? '').toString());
+      var duration = endMin - startMin;
+      if (duration <= 0) duration = 60;
+
+      var start = startMin < cursor ? cursor : startMin;
+      var end = start + duration;
+
+      bool moved;
+      do {
+        moved = false;
+        for (final b in busy) {
+          final bs = b['start'] ?? 0;
+          final be = b['end'] ?? 0;
+          if (start < be && end > bs) {
+            start = be;
+            end = start + duration;
+            moved = true;
+          }
+        }
+      } while (moved);
+
+      t['start_time'] = _minutesToTime(start);
+      t['end_time'] = _minutesToTime(end);
+      normalized.add(t);
+      cursor = end;
+    }
+    return normalized;
+  }
+
   Future<void> _submitEventPromptToGemini(String prompt) async {
     try {
+      // #region debug-point D:event-prompt:start
+      _dbg('D', 'gemini_prompt.dart:_submitEventPromptToGemini', '[DEBUG] ai:eventPrompt:start', {
+        'eventId': widget.eventId,
+        'promptLen': prompt.length,
+      });
+      // #endregion
       // Define events variable and add event details to the prompt
       List<Map<String, dynamic>> events =
       []; // Replace with your actual events list
@@ -40,6 +217,12 @@ class _GeminiPromptState extends State<GeminiPrompt> {
         (jsonDecode(eventDataJson) as List)
             .map((e) => Map<String, String>.from(e)),
       );
+      // #region debug-point D:event-prompt:events-loaded
+      _dbg('D', 'gemini_prompt.dart:_submitEventPromptToGemini', '[DEBUG] ai:eventPrompt:eventsLoaded', {
+        'eventsCount': events.length,
+        'eventDataLen': eventDataJson.length,
+      });
+      // #endregion
 
       String? startTime =
       events[widget.eventId]['Start_time']; // nullable String
@@ -109,9 +292,18 @@ class _GeminiPromptState extends State<GeminiPrompt> {
                 ),
               );
             });
+      } else {
+        Utils.showToast(
+          response.data?['error']?['message']?.toString() ?? 'AI request failed',
+        );
       }
 
     } catch (e) {
+      // #region debug-point E:event-prompt:error
+      _dbg('E', 'gemini_prompt.dart:_submitEventPromptToGemini', '[DEBUG] ai:eventPrompt:error', {
+        'error': e.toString(),
+      });
+      // #endregion
       print('Error sending prompt to AI: $e');
       // Handle error scenario, such as showing a snackbar
     }
@@ -121,6 +313,12 @@ class _GeminiPromptState extends State<GeminiPrompt> {
     // final gemini = Gemini.instance; // Initialize Gemini instance
 
     try {
+      // #region debug-point D:create-prompt:start
+      _dbg('D', 'gemini_prompt.dart:_submitCreateEventPromptToGemini', '[DEBUG] ai:createPrompt:start', {
+        'eventId': widget.eventId,
+        'promptLen': prompt.length,
+      });
+      // #endregion
       // Get current time formatted in 24-hour format
       String currentTime = DateFormat.Hm().format(DateTime.now());
 
@@ -136,10 +334,16 @@ class _GeminiPromptState extends State<GeminiPrompt> {
         (jsonDecode(eventDataJson) as List)
             .map((e) => Map<String, dynamic>.from(e)),
       );
+      // #region debug-point D:create-prompt:events-loaded
+      _dbg('D', 'gemini_prompt.dart:_submitCreateEventPromptToGemini', '[DEBUG] ai:createPrompt:eventsLoaded', {
+        'eventsCount': events.length,
+        'eventDataLen': eventDataJson.length,
+      });
+      // #endregion
 
       // Create a set to track used timings
       // Set<String> usedTimingsSet = {};
-      String usedTimingsSet = "";
+      final busySlots = <String>[];
 
       for (int i = 0; i < events.length; i++) {
         String? startTime = events[i]['start_time']; // nullable String
@@ -147,12 +351,7 @@ class _GeminiPromptState extends State<GeminiPrompt> {
 
         // Ensure startTime and endTime are not null before using them
         if (startTime != null && endTime != null) {
-          String formattedTiming = '$startTime - $endTime';
-
-          usedTimingsSet += formattedTiming;
-          if (i < (events.length - 1)) {
-            usedTimingsSet += ", ";
-          }
+          busySlots.add('$startTime - $endTime');
           // Ensure the timings are unique before adding to the set
           // if (!usedTimingsSet.contains(formattedTiming)) {
           //   promptWithMessage +=
@@ -163,22 +362,34 @@ class _GeminiPromptState extends State<GeminiPrompt> {
         }
       }
 
-      promptWithMessage += usedTimingsSet.length > 0
-          ? "\n*AVOID THE TIME SLOTS " + usedTimingsSet + "*\n"
-          : "";
-      // Add all used timings from event cards to ensure they are not repeated
-      // List<String> usedTimings = usedTimingsSet.toList();
+      final requestedDuration = _extractRequestedDurationMinutes(prompt);
+      final forceSingle = requestedDuration != null && _looksLikeSingleTaskRequest(prompt);
+      final requestedTitle = _extractTaskTitle(prompt);
 
-      // promptWithMessage += 'Busy Timings: ${usedTimings.join(', ')}';
+      if (busySlots.isNotEmpty) {
+        promptWithMessage +=
+            "\nBusy time slots (do NOT overlap with any of these):\n${busySlots.join('\n')}\n";
+      }
 
-      promptWithMessage += ' \nUse This Format:'
-          'Task 1) # (NAME OF TASK) # START TIME - END TIME'+
-          'Task 2) # (NAME OF TASK) # START TIME - END TIME'+
-          'Do not use any bullet points or anything extra as this response will be decoded by a program that only accepts responses in the provided format.\n' +
-          'Use 24-hour format for the time.\n' +
-          '*MAKE SURE TO INCLUDE THE # OR ELSE THE RESPONSE WONT BE DECODED*\n' +
-          '*MAKE SURE YOU GIVE THE START TIME FROM THE **NEXT PERFECT HOUR AFTER ($currentTime)*.\n' +
-          '*DONT WRITE ANYTHING EXTRA THATS NOT IN THE FORMAT AND RESPOND IN 24HR FORMAT .**\n';
+      promptWithMessage += "\nRules:\n";
+      promptWithMessage += "1) Tasks must not overlap existing busy time slots.\n";
+      promptWithMessage += "2) Tasks must not overlap each other. Schedule sequentially.\n";
+      promptWithMessage +=
+          "3) Earliest possible start time is the next perfect hour after ($currentTime).\n";
+      promptWithMessage += "4) Use 24-hour time format HH:MM.\n";
+
+      if (forceSingle) {
+        promptWithMessage += "5) Create exactly ONE task only. Do not split into parts.\n";
+        promptWithMessage +=
+            "6) Duration must be exactly the requested duration in one continuous block.\n";
+        promptWithMessage += "7) Task name must be relevant with no extra content.\n";
+        promptWithMessage +=
+            "\nReturn exactly one line in this format:\nTask 1) # TASK NAME # HH:MM - HH:MM\n";
+      } else {
+        promptWithMessage += "5) Do not schedule multiple tasks in the same time range.\n";
+        promptWithMessage +=
+            "\nReturn tasks one per line in this format:\nTask N) # TASK NAME # HH:MM - HH:MM\n";
+      }
 
       print("prompt message ${promptWithMessage}");
       var response = await httpService.postRequest(AppUrls.gemini_url,showLoading: true,closeLoading: true,rowData: {
@@ -198,9 +409,23 @@ class _GeminiPromptState extends State<GeminiPrompt> {
 
         // Parse response into a list of event data
         List<Map<String, dynamic>> parsedEventData = _parseEventData(responseText, events.length);
+        parsedEventData = _normalizeSchedule(
+          tasks: parsedEventData,
+          busy: _busyIntervals(events),
+          forceSingleDurationMinutes: forceSingle ? requestedDuration : null,
+        );
         widget.onSubmit(parsedEventData); // Pass parsed data back to parent widget
+      } else {
+        Utils.showToast(
+          response.data?['error']?['message']?.toString() ?? 'AI request failed',
+        );
       }
     } catch (e) {
+      // #region debug-point E:create-prompt:error
+      _dbg('E', 'gemini_prompt.dart:_submitCreateEventPromptToGemini', '[DEBUG] ai:createPrompt:error', {
+        'error': e.toString(),
+      });
+      // #endregion
       print('Error sending prompt to AI: $e');
       // Handle error scenario, such as showing a snackbar
     }
@@ -321,7 +546,7 @@ class _GeminiPromptState extends State<GeminiPrompt> {
                               color: Get.theme.iconTheme.color,
                               borderRadius: BorderRadius.circular(25.0),
                             ),
-                            child: Text('${_message}: You',style: TextStyle(color: Get.theme.scaffoldBackgroundColor,fontSize: 15),),
+                            child: Text('${_message}',style: TextStyle(color: Get.theme.scaffoldBackgroundColor,fontSize: 15),),
                           ),
                         ],
                       ),
@@ -390,6 +615,12 @@ class _GeminiPromptState extends State<GeminiPrompt> {
                         onPressed: () {
                           if (_controller.text.isNotEmpty) {
                             _message = _controller.text;
+                            // #region debug-point D:send-pressed
+                            _dbg('D', 'gemini_prompt.dart:onPressed', '[DEBUG] ai:sendPressed', {
+                              'eventId': widget.eventId,
+                              'textLen': _controller.text.length,
+                            });
+                            // #endregion
                             if (widget.eventId >= 0) {
                               _submitEventPromptToGemini(_controller.text);
                             } else {

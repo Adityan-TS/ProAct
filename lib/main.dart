@@ -23,9 +23,16 @@ void main() async {
   await initialize();
 
   // Initialize Supabase
+  final url = supabaseUrl;
+  final anonKey = supabaseAnonKey;
+  if (anonKey.isEmpty || anonKey.startsWith('sb_secret_')) {
+    throw StateError(
+      'Invalid Supabase key. Use the project anon key (not sb_secret) via --dart-define=SUPABASE_ANON_KEY=... and optionally --dart-define=SUPABASE_URL=...',
+    );
+  }
   await Supabase.initialize(
-    url: SupabaseUrl,
-    anonKey: SupabaseKey,
+    url: url,
+    anonKey: anonKey,
   );
 
   // Initialize Gemini

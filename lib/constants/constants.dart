@@ -6,16 +6,40 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:html/parser.dart';
 import 'dart:developer' as d;
+import '../secrets.dart';
 
 ///  this file contains all constant value that are used in other app.
 ///  it helps to centralize all constant values.
 
 const DEBUG = true;
 const InDevelopment = true;
-const GeminiApiKey = "AIzaSyARy4drPo56uNVuziNbW1MFhPoczH7dgok";
-const SupabaseUrl = "https://qtljgttwigasqvkzeqxf.supabase.co";
-const SupabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0bGpndHR3aWdhc3F2a3plcXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk5OTQ1NzUsImV4cCI6MjAzNTU3MDU3NX0.hcbOVDajJSmn7EdisH2eBeLpxOww3sSG7PVxoEsOdeU";
+const DefaultGeminiApiKey = Secrets.geminiApiKey;
+const DefaultGeminiApiVersion = "v1";
+const DefaultGeminiModel = "gemini-2.5-flash";
+const DefaultSupabaseUrl = "https://xqvrxwzfijztreaeuqsw.supabase.co";
+const DefaultSupabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxdnJ4d3pmaWp6dHJlYWV1cXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNTMwMDAsImV4cCI6MjA5NjgyOTAwMH0.tg8rZKhCNLM17bi_UQBk7HW4V26d7-syGjeQIQbtQvs";
 const SidePaddingPage = 15.0;
+
+String get supabaseUrl =>
+    const String.fromEnvironment('SUPABASE_URL', defaultValue: DefaultSupabaseUrl);
+
+String get supabaseAnonKey =>
+    const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: DefaultSupabaseAnonKey);
+
+String get geminiApiKey =>
+    const String.fromEnvironment('GEMINI_API_KEY', defaultValue: DefaultGeminiApiKey);
+
+String get geminiApiVersion => const String.fromEnvironment('GEMINI_API_VERSION',
+    defaultValue: DefaultGeminiApiVersion);
+
+String get geminiModel =>
+    const String.fromEnvironment('GEMINI_MODEL', defaultValue: DefaultGeminiModel);
+
+String get SupabaseUrl => supabaseUrl;
+String get SupabaseKey => supabaseAnonKey;
+String get GeminiApiKey => geminiApiKey;
+String get GeminiApiVersion => geminiApiVersion;
+String get GeminiModel => geminiModel;
 
 
 void printLog(String val){

@@ -12,12 +12,6 @@ import 'package:supabase/supabase.dart'; // Import Supabase package
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Initialize a dummy Supabase client for testing
-    final supabaseClient = SupabaseClient(
-      'https://qtljgttwigasqvkzeqxf.supabase.co', // Replace with your actual Supabase URL
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0bGpndHR3aWdhc3F2a3plcXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk5OTQ1NzUsImV4cCI6MjAzNTU3MDU3NX0.hcbOVDajJSmn7EdisH2eBeLpxOww3sSG7PVxoEsOdeU', // Replace with your actual Supabase anon key
-    );
-
     // Build our app and trigger a frame.
     await tester.pumpWidget(ProAct());
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,6 +16,35 @@ import '../../../controller/home_controller.dart';
 import '../../../controller/dashbord_controller.dart';
 import '../../../model/user_model.dart';
 import '../../../utils/utils.dart';
+
+// #region debug-point D:dbg-reporter
+const String _dbgUrl =
+    String.fromEnvironment('DEBUG_SERVER_URL', defaultValue: 'http://127.0.0.1:7777/event');
+const String _dbgSessionId =
+    String.fromEnvironment('DEBUG_SESSION_ID', defaultValue: 'block-apps-tab-crash');
+void _dbg(String hypothesisId, String location, String msg,
+    [Map<String, Object?> data = const {}]) {
+  () async {
+    try {
+      final payload = jsonEncode({
+        'sessionId': _dbgSessionId,
+        'runId': 'pre',
+        'hypothesisId': hypothesisId,
+        'location': location,
+        'msg': msg,
+        'data': data,
+        'ts': DateTime.now().millisecondsSinceEpoch,
+      });
+      final client = HttpClient();
+      final req = await client.postUrl(Uri.parse(_dbgUrl));
+      req.headers.contentType = ContentType.json;
+      req.write(payload);
+      await req.close();
+      client.close();
+    } catch (_) {}
+  }();
+}
+// #endregion
 
 class DashboardScreen extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
@@ -59,6 +89,9 @@ class DashboardScreen extends StatelessWidget {
               padding: EdgeInsets.all(0),
               child: IconButton(
                 onPressed: () {
+                  // #region debug-point D:blockapps-button
+                  _dbg('D', 'dashboard_screen.dart:IconButton', '[DEBUG] Block Apps button pressed');
+                  // #endregion
                  showBlockAppDialog(context);
                 },
                 icon: Icon(Icons.lock,size: 25,color: Theme.of(context).iconTheme.color,),
@@ -79,6 +112,9 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Future showBlockAppDialog(BuildContext context) {
+     // #region debug-point D:blockapps-dialog
+     _dbg('D', 'dashboard_screen.dart:showBlockAppDialog', '[DEBUG] showBlockAppDialog called');
+     // #endregion
      return showDialog(
       context: context,
       builder: (context) {

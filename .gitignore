@@ -44,3 +44,5 @@ app.*.map.json
 /android/.kotlin
 /android/.gradle/
 /android/app/.cxx
+.dbg/
+lib/secrets.dart

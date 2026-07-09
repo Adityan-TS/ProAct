@@ -5,8 +5,12 @@ import '../constants/constants.dart';
 ///  it helps to centralize all the urls.
 ///
 class AppUrls {
-  static String image_url = "https://qtljgttwigasqvkzeqxf.supabase.co/storage/v1/object/public/";
-  static String gemini_url =  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GeminiApiKey}";
+  static String get image_url => "$supabaseUrl/storage/v1/object/public/";
+  static String get gemini_url {
+    return "https://generativelanguage.googleapis.com/$geminiApiVersion/models/$geminiModel:generateContent";
+  }
+  static String get gemini_models_url =>
+      "https://generativelanguage.googleapis.com/$geminiApiVersion/models";
   static String base_url = InDevelopment ? 'https://generativelanguage.googleapis.com/v1beta/models' : "https://generativelanguage.googleapis.com/v1beta/models";
 
 
